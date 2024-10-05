@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    container_name: patientzer0-app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/patientzerodb
+    volumes:
+      - .:/usr/src/app
+    command: npm start
+
+  mongo:
+    image: mongo:latest
+    container_name: patientzer0-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/db:/data/db
