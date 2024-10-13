@@ -1,0 +1,17 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa; /* Light background color */
+  }
+  
+  .App {
+    text-align: center; /* Center text */
+  }
+  
+  .App-header {
+    background-color: #282c34; /* Dark background for header */
+    padding: 20px;
+    color: white; /* White text color */
+  }
+  
