@@ -1,9 +1,9 @@
+// auth.js from route
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authenticateJWT = require('../middleware/auth');
-const { emitUserRegistered } = require('../utils/socketEvents');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
@@ -38,8 +38,6 @@ router.post('/signup', async (req, res) => {
         });
 
         await newUser.save();
-        emitUserRegistered(newUser); // Emit the user registration event
-
         res.status(201).json({ message: 'User created successfully' });
     } catch (error) {
         console.error('Error during signup:', error);
