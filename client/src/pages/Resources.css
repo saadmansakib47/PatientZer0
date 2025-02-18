@@ -1,0 +1,87 @@
+/* src/pages/Resources.css */
+
+.resources {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: Arial, sans-serif;
+  color: #2d3748;
+  text-align: center;
+}
+
+.resources-title {
+  font-size: 36px;
+  color: #2f855a;
+  margin-bottom: 10px;
+  animation: fadeInDown 0.7s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resources-description {
+  color: #718096;
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+.resources-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.resource-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 350px;
+  text-align: left;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.resource-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+}
+
+.resource-title {
+  font-size: 22px;
+  color: #2d3748;
+  margin-bottom: 10px;
+}
+
+.resource-description {
+  font-size: 16px;
+  color: #718096;
+  margin-bottom: 15px;
+}
+
+.resource-link {
+  color: #48bb78;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.resource-link:hover {
+  color: #2f855a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .resource-card {
+    max-width: 100%;
+  }
+}

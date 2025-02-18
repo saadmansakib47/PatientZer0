@@ -1,0 +1,168 @@
+/* Container styling */
+.my-health {
+  padding: 40px;
+  text-align: center;
+  background: linear-gradient(to bottom right, #f0f4fc, #e6e9f5);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: "Roboto", sans-serif;
+}
+
+.my-health-title {
+  font-size: 36px;
+  color: #1a202c;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.my-health-subtitle {
+  font-size: 18px;
+  color: #4a5568;
+  margin-bottom: 30px;
+}
+
+/* Health metrics section */
+.health-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.metric-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 160px;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.metric-icon {
+  font-size: 36px;
+  color: #3182ce;
+  margin-bottom: 10px;
+}
+
+.metric-details h3 {
+  font-size: 16px;
+  color: #2d3748;
+  font-weight: bold;
+}
+
+/* Health tips section */
+.health-tips {
+  margin-top: 40px;
+  text-align: left;
+}
+
+.health-tips h2 {
+  color: #2d3748;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.health-tips ul li {
+  font-size: 16px;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+/* Recent activities section */
+.recent-activities {
+  margin-top: 40px;
+  text-align: left;
+}
+
+.recent-activities h2 {
+  color: #2d3748;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.recent-activities ul li {
+  font-size: 16px;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+/* Health goals section */
+.health-goals {
+  margin-top: 40px;
+  text-align: left;
+}
+
+.health-goals h2 {
+  color: #2d3748;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.goal-progress h4 {
+  font-size: 18px;
+  color: #2d3748;
+  margin-bottom: 5px;
+}
+
+.progress-bar {
+  width: 100%;
+  background-color: #e2e8f0;
+  border-radius: 8px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.progress {
+  background-color: #68d391;
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+/* Appointments section */
+.appointments {
+  margin-top: 40px;
+  text-align: left;
+}
+
+.appointments h2 {
+  color: #2d3748;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.appointments ul li {
+  font-size: 16px;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+/* Add New Metric Button */
+.add-metric-btn {
+  margin-top: 40px;
+  padding: 12px 20px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: #3182ce;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.add-metric-btn:hover {
+  background-color: #2b6cb0;
+  transform: translateY(-3px);
+}

@@ -1,0 +1,165 @@
+/* Container styling */
+.scan-report-container {
+  padding: 40px;
+  background: linear-gradient(to bottom right, #e6f7ff, #f0faff);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: "Roboto", sans-serif;
+}
+
+.scan-report-title {
+  font-size: 36px;
+  color: #1a202c;
+  margin-bottom: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.scan-report-subtitle {
+  font-size: 18px;
+  color: #4a5568;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* Form Section Styling */
+.report-form {
+  margin-top: 30px;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  color: #2d3748;
+  margin-bottom: 5px;
+}
+
+.form-group select,
+.form-group input[type="file"],
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease;
+  font-size: 16px;
+}
+
+.form-group select:focus,
+.form-group input[type="file"]:focus,
+.form-group textarea:focus {
+  border-color: #3182ce;
+  outline: none;
+  box-shadow: 0 0 8px rgba(66, 153, 225, 0.3);
+}
+
+.form-group textarea {
+  resize: vertical;
+  height: 100px;
+}
+
+/* Submit Button Styling */
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #3182ce;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.submit-btn:hover {
+  background-color: #2b6cb0;
+  transform: translateY(-3px);
+}
+
+/* Uploaded scans section */
+.uploaded-scans h2 {
+  font-size: 24px;
+  color: #2d3748;
+  margin-bottom: 15px;
+}
+
+.scans-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.scan-item {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: 150px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.scan-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.scan-thumbnail {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.scan-details {
+  padding: 10px;
+  text-align: center;
+}
+
+.scan-name {
+  font-size: 16px;
+  color: #2d3748;
+  font-weight: bold;
+}
+
+.scan-date {
+  font-size: 14px;
+  color: #718096;
+}
+
+/* Report Summary Section */
+.report-summary {
+  margin-top: 30px;
+}
+
+.report-summary h2 {
+  font-size: 24px;
+  color: #2d3748;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.report-summary textarea {
+  width: 100%;
+  height: 120px;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  resize: vertical;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.report-summary textarea:focus {
+  outline: none;
+  box-shadow: 0 0 8px rgba(66, 153, 225, 0.4);
+}
