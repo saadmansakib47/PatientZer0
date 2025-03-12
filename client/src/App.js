@@ -16,6 +16,7 @@ import Resources from "./pages/Resources";
 import PatientProfile from "./components/PatientProfile";
 import SignupForm from "./components/SignupForm";
 import LoginForm from "./components/LoginForm";
+import OAuthCallback from "./pages/OAuthCallback";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import ChatBox from "./components/Chatbox";
 import Notification from "./components/Notification";
@@ -85,6 +86,7 @@ const App = () => {
           <Route path="/resources" element={<Resources />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/login" element={<LoginForm />} />
+          <Route path="/oauth-callback" element={<OAuthCallback />} />
           <Route
             path="/profile"
             element={
