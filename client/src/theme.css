@@ -1,0 +1,134 @@
+/* Default Light Mode Variables */
+:root {
+  --background-color: #f0faff;
+  --text-color: #1a202c;
+  --secondary-color: #4a5568;
+  --accent-color: #3182ce;
+  --border-color: #cbd5e0;
+  --card-background: #ffffff;
+}
+
+/* Dark Mode Variables */
+.dark-mode {
+  --background-color: #1a202c;
+  --text-color: #e2e8f0;
+  --secondary-color: #a0aec0;
+  --accent-color: #63b3ed;
+  --border-color: #4a5568;
+  --card-background: #2d3748;
+}
+
+/* Global styling using CSS variables */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: "Roboto", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Styling for all containers */
+.container {
+  padding: 20px;
+  background-color: var(--card-background);
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+button {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #2b6cb0;
+}
+
+/* Form Inputs and Textareas */
+input,
+select,
+textarea {
+  background-color: var(--card-background);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 8px;
+  width: 100%;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px rgba(66, 153, 225, 0.5);
+  outline: none;
+}
+
+/* Headings */
+h1,
+h2,
+h3 {
+  color: var(--text-color);
+}
+
+/* Card styling */
+.card {
+  background-color: var(--card-background);
+  color: var(--text-color);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styling (for data tables or reports) */
+table {
+  width: 100%;
+  background-color: var(--card-background);
+  color: var(--text-color);
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+table,
+th,
+td {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+}
+
+th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+/* Position the theme toggle button on the top-right */
+.theme-toggle-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.theme-toggle {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background-color: var(--accent-color);
+  transform: scale(1.1);
+}

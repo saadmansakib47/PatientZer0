@@ -1,0 +1,144 @@
+/* src/pages/Community.css */
+
+.community {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: Arial, sans-serif;
+  color: #2d3748;
+}
+
+.community-title {
+  font-size: 36px;
+  color: #2f855a;
+  text-align: center;
+  margin-bottom: 10px;
+  animation: fadeInDown 0.7s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.community-description {
+  text-align: center;
+  color: #718096;
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+.create-post {
+  margin-bottom: 30px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f7fafc;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.create-post textarea {
+  width: 100%;
+  height: 100px;
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+  resize: none;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.post-button {
+  background-color: #48bb78;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.post-button:hover {
+  background-color: #2f855a;
+}
+
+.post-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.post-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.post-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+}
+
+.post-content {
+  font-size: 18px;
+  color: #2d3748;
+  margin-bottom: 15px;
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.like-button,
+.comment-button {
+  background-color: transparent;
+  color: #2d3748;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.like-button:hover {
+  color: #48bb78;
+}
+
+.comment-button:hover {
+  color: #63b3ed;
+}
+
+.comments-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.comment {
+  font-size: 14px;
+  color: #718096;
+  padding: 5px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .community-title {
+    font-size: 28px;
+  }
+
+  .post-content {
+    font-size: 16px;
+  }
+
+  .post-button {
+    width: 100%;
+  }
+}

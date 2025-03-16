@@ -1,0 +1,156 @@
+/* Navbar container styling */
+.navbar {
+  display: flex;
+  justify-content: center;
+  padding: 15px 20px;
+  background-color: var(--navbar-bg, #ffffff);
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: Arial, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar.dark {
+  background-color: #2d3748;
+  color: #e2e8f0;
+}
+
+/* Center the content inside the navbar */
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Navbar links and logo styling */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between logo and text */
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--link-color, #007bff);
+}
+
+.logo-image {
+  height: 40px; /* Adjust as necessary */
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--link-color, #007bff);
+  margin-left: 8px; /* Adjust spacing as needed */
+  transition: color 0.3s ease;
+}
+
+.logo-link:hover .logo-text {
+  color: #0056b3;
+}
+
+.navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.navbar-links a {
+  color: var(--link-color, #333333);
+  text-decoration: none;
+  font-size: 16px;
+  padding: 10px 15px;
+  transition: color 0.3s, background-color 0.3s;
+  border-radius: 8px;
+}
+
+.navbar-links a:hover {
+  color: #ffffff;
+  background-color: var(--link-hover-color, #007bff);
+}
+
+.navbar.dark .navbar-links a {
+  color: #e2e8f0;
+}
+
+.navbar-links .active {
+  background-color: var(--accent-color, #007bff);
+  color: #ffffff;
+}
+
+/* Dark mode toggle and auth buttons styling */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+.auth-btn {
+  background-color: var(--accent-color, #007bff);
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  margin-left: 10px;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-btn:hover {
+  background-color: #0056b3;
+}
+
+.join-btn {
+  background-color: #28a745;
+}
+
+.join-btn:hover {
+  background-color: #218838;
+}
+
+/* Dark Mode Toggle Switch */
+.dark-mode-toggle {
+  margin-right: 20px; /* Add margin to separate from Sign In button */
+  cursor: pointer;
+}
+
+.toggle-switch {
+  width: 50px;
+  height: 25px;
+  border-radius: 15px;
+  background-color: #ccc;
+  position: relative;
+  transition: background-color 0.3s;
+}
+
+.toggle-switch.dark {
+  background-color: #4a5568;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  transition: transform 0.3s;
+}
+
+.toggle-switch.dark .toggle-thumb {
+  transform: translateX(24px);
+  background-color: #e2e8f0;
+}
