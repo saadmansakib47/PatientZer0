@@ -1,137 +1,174 @@
-// ScanReport.js
-import React, { useState } from "react";
-import "./ScanReport.css";
+import React, { useState, useRef } from 'react';
+import { Upload, FileText, AlertCircle, Loader2, Clock, List, Save } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const ScanReport = () => {
-  const [uploadedScans, setUploadedScans] = useState([
-    {
-      id: 1,
-      name: "MRI Scan - Brain",
-      date: "2024-10-01",
-      imageUrl: "path/to/image1.jpg",
-    },
-    {
-      id: 2,
-      name: "CT Scan - Chest",
-      date: "2024-09-15",
-      imageUrl: "path/to/image2.jpg",
-    },
-  ]);
+function ScanReport() {
+  const [file, setFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+  const { isAuthenticated } = useAuth();
 
-  const [reportSummary, setReportSummary] = useState("");
-  const [newScan, setNewScan] = useState(null);
-  const [testType, setTestType] = useState("");
-  const [reportType, setReportType] = useState("");
-  const [treatmentSuggestions, setTreatmentSuggestions] = useState("");
+  const API_URL = "https://apollo-api-wmzs.onrender.com/api/analyze-report";
+  const SAVE_REPORT_URL = "https://apollo-api-wmzs.onrender.com/api/save-report";
 
-  const handleUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setNewScan(file);
-      alert("New scan uploaded successfully.");
+  const handleFileChange = (event) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setFile(event.target.files[0]);
     }
   };
 
-  const handleSummaryChange = (event) => {
-    setReportSummary(event.target.value);
+  const handleUpload = async () => {
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("report", file);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(API_URL, {
+        method: "POST",
+        body: formData,
+        headers: { 
+          "Accept": "application/json",
+          "Authorization": Bearer ${token}
+        },
+      });
+      
+      if (!response.ok) throw new Error("Failed to analyze the report. Please try again.");
+      
+      const result = await response.json();
+      setAnalysisResult(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Submit functionality here
-    alert("Report submitted successfully.");
+  const handleSaveReport = async () => {
+    if (!analysisResult) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(SAVE_REPORT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": Bearer ${token}
+        },
+        body: JSON.stringify(analysisResult),
+      });
+      
+      if (!response.ok) throw new Error("Failed to save the report. Please try again.");
+      
+      // Show success message or handle successful save
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
-    <div className="scan-report-container">
-      <h1 className="scan-report-title">Scan Report</h1>
-      <p className="scan-report-subtitle">
-        Review and upload your medical scans
-      </p>
-
-      {/* Uploaded Scans Section */}
-      <div className="uploaded-scans">
-        <h2>Uploaded Scans</h2>
-        <div className="scans-gallery">
-          {uploadedScans.map((scan) => (
-            <div className="scan-item" key={scan.id}>
-              <img
-                src={scan.imageUrl}
-                alt={scan.name}
-                className="scan-thumbnail"
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Scan Report Analysis</h1>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6">
+          <div className="text-center">
+            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+            <div className="mt-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
               />
-              <div className="scan-details">
-                <p className="scan-name">{scan.name}</p>
-                <p className="scan-date">Uploaded on: {scan.date}</p>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+              >
+                Select File
+              </button>
+            </div>
+            {file && (
+              <div className="mt-4 flex items-center">
+                <FileText className="h-5 w-5 text-gray-500 mr-2" />
+                <span className="text-gray-600">{file.name}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {file && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={handleUpload}
+              disabled={isUploading}
+              className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 disabled:bg-gray-400"
+            >
+              {isUploading ? (
+                <div className="flex items-center">
+                  <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                  Analyzing...
+                </div>
+              ) : (
+                "Analyze Report"
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+
+      {analysisResult && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-semibold mb-4">Analysis Results</h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-start">
+              <Clock className="h-5 w-5 text-gray-500 mr-3 mt-1" />
+              <div>
+                <h3 className="font-medium">Processing Time</h3>
+                <p className="text-gray-600">{analysisResult.processingTime} seconds</p>
               </div>
             </div>
-          ))}
+
+            <div className="flex items-start">
+              <List className="h-5 w-5 text-gray-500 mr-3 mt-1" />
+              <div>
+                <h3 className="font-medium">Key Findings</h3>
+                <ul className="list-disc list-inside text-gray-600">
+                  {analysisResult.findings?.map((finding, index) => (
+                    <li key={index}>{finding}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSaveReport}
+              className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            >
+              <Save className="h-5 w-5 mr-2" />
+              Save Report
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* Report Form Section */}
-      <form className="report-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Select Test Type</label>
-          <select
-            value={testType}
-            onChange={(e) => setTestType(e.target.value)}
-            required
-          >
-            <option value="">Choose a test type</option>
-            <option value="MRI">MRI</option>
-            <option value="CT">CT Scan</option>
-            <option value="X-ray">X-ray</option>
-            {/* Add more options as needed */}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Report Type</label>
-          <select
-            value={reportType}
-            onChange={(e) => setReportType(e.target.value)}
-            required
-          >
-            <option value="">Choose report type</option>
-            <option value="Routine Checkup">Routine Checkup</option>
-            <option value="Follow-up">Follow-up</option>
-            <option value="Diagnostic">Diagnostic</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Upload Medical Report</label>
-          <input type="file" onChange={handleUpload} required />
-          {newScan && <p>Uploaded File: {newScan.name}</p>}
-        </div>
-
-        <div className="form-group">
-          <label>Enter Treatment Suggestions</label>
-          <textarea
-            placeholder="Enter treatment suggestions here..."
-            value={treatmentSuggestions}
-            onChange={(e) => setTreatmentSuggestions(e.target.value)}
-            required
-          ></textarea>
-        </div>
-
-        <button type="submit" className="submit-btn">
-          Submit
-        </button>
-      </form>
-
-      {/* Report Summary Section */}
-      <div className="report-summary">
-        <h2>Report Summary</h2>
-        <textarea
-          placeholder="Enter doctor's notes or comments here..."
-          value={reportSummary}
-          onChange={handleSummaryChange}
-        ></textarea>
-      </div>
+      )}
     </div>
   );
-};
+}
 
 export default ScanReport;
