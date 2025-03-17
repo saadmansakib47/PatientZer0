@@ -5,33 +5,24 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   googleId: { type: String },
-  role: { type: String, required: true, enum: ["patient", "doctor"] },
+  role: { type: String, enum: ["patient", "doctor"], default: "patient" },
   profilePhoto: { type: String },
   additionalInfo: {
     age: Number,
     gender: String,
     country: String,
     state: String,
-    hospitalName: {
-      type: String,
-      required: function () {
-        return this.role === "doctor";
-      },
-    },
-    certificationId: {
-      type: String,
-      unique: true,
-      sparse: true,
-      required: function () {
-        return this.role === "doctor";
-      },
-    },
-    qualification: {
-      type: String,
-      required: function () {
-        return this.role === "doctor";
-      },
-    },
+    // Doctor specific fields
+    isDoctorVerified: { type: Boolean, default: false },
+    hospitalName: String,
+    certificationId: { type: String, unique: true, sparse: true },
+    qualification: String,
+    degreeProof: String, // URL to uploaded degree proof
+    verificationStatus: { 
+      type: String, 
+      enum: ["pending", "approved", "rejected"],
+      default: "pending"
+    }
   },
   date: { type: Date, default: Date.now },
 });

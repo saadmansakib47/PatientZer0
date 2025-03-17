@@ -95,63 +95,31 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 }
 
 // Signup route
-// routes/auth.js
 router.post("/signup", async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      role,
-      age,
-      gender,
-      country,
-      state,
-      hospitalName,
-      certificationId,
-      qualification,
-      profilePhoto,
-    } = req.body;
+    const { name, email, password, age, gender, country, state } = req.body;
 
     // Check if the email is already registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ error: "An account with this email already exists." });
-    }
-
-    // If role is doctor, check for unique certification ID
-    if (role === "doctor" && certificationId) {
-      const existingCertId = await User.findOne({
-        "additionalInfo.certificationId": certificationId,
-      });
-      if (existingCertId) {
-        return res
-          .status(400)
-          .json({ error: "This Certification ID is already in use." });
-      }
+      return res.status(400).json({ error: "An account with this email already exists." });
     }
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user data based on the role
+    // Create new user with default role as patient
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      role,
-      profilePhoto: profilePhoto || null,
+      role: "patient",
       additionalInfo: {
-        age: role === "patient" ? age : undefined,
-        gender: role === "patient" ? gender : undefined,
-        country: role === "patient" ? country : undefined,
-        state: role === "patient" ? state : undefined,
-        hospitalName: role === "doctor" ? hospitalName : undefined,
-        certificationId: role === "doctor" ? certificationId : undefined,
-        qualification: role === "doctor" ? qualification : undefined,
-      },
+        age,
+        gender,
+        country,
+        state
+      }
     });
 
     // Save the new user
@@ -159,20 +127,38 @@ router.post("/signup", async (req, res) => {
     res.status(201).json({ message: "User created successfully" });
   } catch (error) {
     console.error("Error during signup:", error);
+    res.status(500).json({ error: "An error occurred during signup" });
+  }
+});
 
-    // Check for MongoDB validation errors (e.g., unique constraints)
-    if (error.code === 11000) {
-      if (
-        error.keyPattern &&
-        error.keyPattern["additionalInfo.certificationId"]
-      ) {
-        return res
-          .status(400)
-          .json({ error: "This Certification ID is already in use." });
-      }
+// Doctor verification route
+router.post("/verify-doctor", authenticateJWT, async (req, res) => {
+  try {
+    const { hospitalName, certificationId, qualification, degreeProof } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(500).json({ error: "An error occurred during signup" });
+    // Update user role and doctor verification details
+    user.role = "doctor";
+    user.additionalInfo = {
+      ...user.additionalInfo,
+      hospitalName,
+      certificationId,
+      qualification,
+      degreeProof,
+      isDoctorVerified: false,
+      verificationStatus: "pending"
+    };
+
+    await user.save();
+    res.status(200).json({ message: "Doctor verification request submitted successfully" });
+  } catch (error) {
+    console.error("Error during doctor verification:", error);
+    res.status(500).json({ error: "An error occurred during doctor verification" });
   }
 });
 

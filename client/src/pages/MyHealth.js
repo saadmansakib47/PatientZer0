@@ -1,8 +1,43 @@
 // MyHealth.js
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "./MyHealth.css";
 
 const MyHealth = () => {
+  const { isAuthenticated, loading, user } = useAuth();
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    // Check if we have a token in localStorage
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    // If we're not loading and not authenticated, redirect to login
+    if (!loading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [loading, isAuthenticated, navigate]);
+
+  // If still loading, show loading state
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading your health dashboard...</p>
+      </div>
+    );
+  }
+
+  // If not authenticated, don't render anything (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const healthMetrics = [
     { title: "Heart Rate", value: "72 bpm", icon: "❤️" },
     { title: "Blood Pressure", value: "120/80 mmHg", icon: "🩸" },
@@ -34,7 +69,7 @@ const MyHealth = () => {
     <div className="my-health">
       <h1 className="my-health-title">My Health Dashboard</h1>
       <p className="my-health-subtitle">
-        Track and manage your vital health metrics.
+        Welcome back, {user?.name}! Track and manage your vital health metrics.
       </p>
 
       {/* Health Metrics Section */}
