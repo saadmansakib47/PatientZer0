@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, AlertCircle, Loader2, Clock, List, Save } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 function ScanReport() {
   const [file, setFile] = useState(null);
@@ -8,13 +7,12 @@ function ScanReport() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
-  const { isAuthenticated } = useAuth();
 
   const API_URL = "https://apollo-api-wmzs.onrender.com/api/analyze-report";
   const SAVE_REPORT_URL = "https://apollo-api-wmzs.onrender.com/api/save-report";
 
   const handleFileChange = (event) => {
-    if (event.target.files && event.target.files.length > 0) {
+    if (event.target.files?.length > 0) {
       setFile(event.target.files[0]);
     }
   };
@@ -28,21 +26,18 @@ function ScanReport() {
     formData.append("report", file);
     
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(API_URL, {
         method: "POST",
         body: formData,
-        headers: { 
-          "Accept": "application/json",
-          "Authorization": Bearer ${token}
-        },
+        headers: { "Accept": "application/json" },
       });
-      
+
       if (!response.ok) throw new Error("Failed to analyze the report. Please try again.");
-      
+
       const result = await response.json();
       setAnalysisResult(result);
     } catch (err) {
+      setAnalysisResult(null); // Reset analysis result if the request fails
       setError(err.message);
     } finally {
       setIsUploading(false);
@@ -50,123 +45,99 @@ function ScanReport() {
   };
 
   const handleSaveReport = async () => {
-    if (!analysisResult) return;
-    
+    const token = localStorage.getItem("token"); // Retrieve token from storage
+
+    if (!token) {
+      alert("You need to log in to save the report.");
+      window.location.href = "/login"; // Redirect to login page
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(SAVE_REPORT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": Bearer ${token}
+          "Authorization": `Bearer ${token}`, // Use stored auth token
         },
         body: JSON.stringify(analysisResult),
       });
-      
+
       if (!response.ok) throw new Error("Failed to save the report. Please try again.");
-      
-      // Show success message or handle successful save
+
+      alert("Report saved successfully!");
     } catch (err) {
-      setError(err.message);
+      alert(err.message);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Scan Report Analysis</h1>
-      
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6">
-          <div className="text-center">
-            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-            <div className="mt-4">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".pdf,.jpg,.jpeg,.png"
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-              >
-                Select File
-              </button>
-            </div>
-            {file && (
-              <div className="mt-4 flex items-center">
-                <FileText className="h-5 w-5 text-gray-500 mr-2" />
-                <span className="text-gray-600">{file.name}</span>
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Medical Report Analyzer</h1>
+        <p className="text-gray-600 mb-8">Upload your medical report and get an AI-powered analysis in simple terms.</p>
+
+        <div className="space-y-4 mb-8">
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx,.txt" />
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onClick={() => fileInputRef.current?.click()}>
+            <Upload size={20} /> Choose File
+          </button>
+          {file && <p className="text-sm text-gray-600 flex items-center gap-2"><FileText size={16} /> Selected File: {file.name}</p>}
+          <button className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleUpload} disabled={!file || isUploading}>
+            {isUploading ? (<><Loader2 className="animate-spin" size={20} /> Processing...</>) : (<>Analyze Report</>)}
+          </button>
         </div>
 
-        {file && (
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={handleUpload}
-              disabled={isUploading}
-              className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 disabled:bg-gray-400"
-            >
-              {isUploading ? (
-                <div className="flex items-center">
-                  <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                  Analyzing...
+        {error && <p className="text-red-600 flex items-center gap-2"><AlertCircle size={18} /> {error}</p>}
+
+        {analysisResult && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-800">Analysis Result</h2>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="flex items-center gap-2 text-gray-700 mb-4">
+                <FileText size={18} /><span className="font-medium">Extracted Text:</span> {analysisResult?.text || "No text extracted."}
+              </p>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <h3 className="flex items-center gap-2 font-medium text-gray-800"><List size={18} /> Key Findings</h3>
+                  <ul className="list-disc list-inside text-gray-700 pl-2">
+                    {analysisResult?.analysis?.keyFindings?.length > 0 
+                      ? analysisResult.analysis.keyFindings.map((finding, index) => (<li key={`finding-${index}`} className="mb-1">{finding}</li>))
+                      : <li>No key findings available.</li>}
+                  </ul>
                 </div>
-              ) : (
-                "Analyze Report"
-              )}
+
+                <div className="space-y-2">
+                  <h3 className="flex items-center gap-2 font-medium text-gray-800"><Clock size={18} /> Recommendations</h3>
+                  <ul className="list-disc list-inside text-gray-700 pl-2">
+                    {analysisResult?.analysis?.recommendations?.length > 0
+                      ? analysisResult.analysis.recommendations.map((rec, index) => (<li key={`recommendation-${index}`} className="mb-1">{rec}</li>))
+                      : <li>No recommendations available.</li>}
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="flex items-center gap-2 font-medium text-gray-800"><AlertCircle size={18} /> Urgent Concerns</h3>
+                  <ul className="list-disc list-inside text-gray-700 pl-2">
+                    {analysisResult?.analysis?.urgentConcerns?.length > 0
+                      ? analysisResult.analysis.urgentConcerns.map((concern, index) => (<li key={`concern-${index}`} className="mb-1">{concern}</li>))
+                      : <li>No urgent concerns.</li>}
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-medium text-gray-800">Simplified Explanation</h3>
+                  <p className="text-gray-700">{analysisResult?.analysis?.simplifiedExplanation || "No explanation available."}</p>
+                </div>
+              </div>
+            </div>
+            <button className="flex items-center gap-2 px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors" onClick={handleSaveReport}>
+              <Save size={20} /> Save Report
             </button>
           </div>
         )}
       </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
-          <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <span>{error}</span>
-          </div>
-        </div>
-      )}
-
-      {analysisResult && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold mb-4">Analysis Results</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <Clock className="h-5 w-5 text-gray-500 mr-3 mt-1" />
-              <div>
-                <h3 className="font-medium">Processing Time</h3>
-                <p className="text-gray-600">{analysisResult.processingTime} seconds</p>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <List className="h-5 w-5 text-gray-500 mr-3 mt-1" />
-              <div>
-                <h3 className="font-medium">Key Findings</h3>
-                <ul className="list-disc list-inside text-gray-600">
-                  {analysisResult.findings?.map((finding, index) => (
-                    <li key={index}>{finding}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSaveReport}
-              className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-            >
-              <Save className="h-5 w-5 mr-2" />
-              Save Report
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
