@@ -38,12 +38,8 @@ const OAuthCallback = () => {
         // Update auth context
         login({ id: _id, name, email, role, token });
 
-        // Redirect based on role
-        if (role === "doctor") {
-          navigate("/doctor-dashboard");
-        } else {
-          navigate("/patient-dashboard");
-        }
+        // Always redirect to MyHealth page
+        navigate("/my-health");
       } catch (error) {
         console.error("Error processing OAuth callback:", error);
         navigate("/login");

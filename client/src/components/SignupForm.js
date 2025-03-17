@@ -20,8 +20,6 @@ const countries = [
   "South Africa",
 ];
 
-const certificationsList = ["FCPS", "MRCP", "MD", "USMLE", "PLAB"];
-
 const SignupForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -29,32 +27,17 @@ const SignupForm = () => {
     name: "",
     email: "",
     password: "",
-    role: "patient",
     age: "",
     gender: "male",
     country: "",
     state: "",
-    hospitalName: "",
-    certificationId: "",
-    qualification: "",
-    certifications: [], // New state for certifications
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(null); // State to hold error message
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleCheckboxChange = (e) => {
-    const { value, checked } = e.target;
-    setFormData((prevData) => {
-      const certifications = checked
-        ? [...prevData.certifications, value]
-        : prevData.certifications.filter((cert) => cert !== value);
-      return { ...prevData, certifications };
-    });
   };
 
   const toggleShowPassword = () => {
@@ -63,7 +46,7 @@ const SignupForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Clear previous error
+    setError(null);
 
     try {
       const res = await axiosInstance.post("/auth/signup", formData);
@@ -75,25 +58,18 @@ const SignupForm = () => {
           id: res.data.user?.id,
           name: formData.name,
           email: formData.email,
-          role: formData.role,
+          role: "patient", // Default role is always patient
           token: res.data.token,
         };
 
         login(userData);
-
-        // Redirect based on role
-        if (formData.role === "doctor") {
-          navigate("/doctor-dashboard");
-        } else {
-          navigate("/patient-dashboard");
-        }
+        navigate("/my-health"); // Always redirect to MyHealth page
       } else {
-        // If no token but successful signup, redirect to login
         navigate("/login");
       }
     } catch (error) {
       if (error.response && error.response.status === 400) {
-        setError(error.response.data.error); // Display error from backend
+        setError(error.response.data.error);
       } else {
         setError("An error occurred. Please try again.");
       }
@@ -136,90 +112,41 @@ const SignupForm = () => {
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
-        <label htmlFor="role">Select Role:</label>
-        <select name="role" value={formData.role} onChange={handleChange}>
-          <option value="patient">Patient</option>
-          <option value="doctor">Doctor</option>
+        <input
+          type="number"
+          name="age"
+          placeholder="Age"
+          onChange={handleChange}
+        />
+        <label htmlFor="gender">Gender:</label>
+        <select
+          name="gender"
+          value={formData.gender}
+          onChange={handleChange}
+        >
+          <option value="male">Male</option>
+          <option value="female">Female</option>
         </select>
-
-        {formData.role === "patient" ? (
-          <>
-            <input
-              type="number"
-              name="age"
-              placeholder="Age"
-              onChange={handleChange}
-            />
-            <label htmlFor="gender">Gender:</label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={handleChange}
-            >
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-            <label htmlFor="country">Country:</label>
-            <select
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select your country</option>
-              {countries.map((country, index) => (
-                <option key={index} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              name="state"
-              placeholder="State"
-              onChange={handleChange}
-            />
-          </>
-        ) : (
-          <>
-            <input
-              type="text"
-              name="hospitalName"
-              placeholder="Hospital Name"
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="text"
-              name="certificationId"
-              placeholder="Certification ID (must be unique)"
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="text"
-              name="qualification"
-              placeholder="Qualification"
-              onChange={handleChange}
-              required
-            />
-
-            <label>Certifications:</label>
-            <div className="checkbox-group">
-              {certificationsList.map((cert, index) => (
-                <div key={index} className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    name="certifications"
-                    value={cert}
-                    onChange={handleCheckboxChange}
-                  />
-                  <label>{cert}</label>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        <label htmlFor="country">Country:</label>
+        <select
+          name="country"
+          value={formData.country}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select your country</option>
+          {countries.map((country, index) => (
+            <option key={index} value={country}>
+              {country}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          name="state"
+          placeholder="State"
+          onChange={handleChange}
+        />
 
         {/* Display error message if account already exists */}
         {error && <p className="error-message">{error}</p>}

@@ -22,32 +22,14 @@ import ChatBox from "./components/Chatbox";
 import Notification from "./components/Notification";
 import { getPatientIdFromToken } from "./utils/decodeToken";
 import { jwtDecode } from "jwt-decode";
-import Footer from "./components/Footer"; // Import Footer component
+import Footer from "./components/Footer";
 import "./theme.css";
 
-const App = () => {
+// Separate component for the app content
+const AppContent = () => {
   const [chatRequest, setChatRequest] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
-  const { isAuthenticated, userRole, patientId } = useAuth() || {};
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decodedPatientId = getPatientIdFromToken(token);
-        const decodedUserRole = jwtDecode(token).role;
-        if (decodedPatientId) {
-          console.log("User is authenticated:", true);
-        } else {
-          console.log("User is authenticated:", false);
-        }
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    } else {
-      console.log("No token found, user is not authenticated");
-    }
-  }, []);
+  const { isAuthenticated, user, loading } = useAuth();
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("darkMode") === "true";
@@ -70,43 +52,77 @@ const App = () => {
     document.body.className = newTheme ? "dark-mode" : "light-mode";
   };
 
+  // Show loading state while checking authentication
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <AuthProvider>
-      <Router>
-        <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-        {chatRequest && userRole !== "doctor" && (
-          <Notification message={chatRequest} onAccept={acceptChat} />
-        )}
-        <Routes>
-          <Route path="/" element={<Dashboard userRole={userRole} />} />
-          <Route path="/my-health" element={<MyHealth />} />
-          <Route path="/scan-report" element={<ScanReport />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/resources" element={<Resources />} />
-          <Route path="/signup" element={<SignupForm />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/oauth-callback" element={<OAuthCallback />} />
-          <Route
-            path="/profile"
-            element={
-              isAuthenticated ? <PatientProfile /> : <Navigate to="/login" />
-            }
-          />
-          <Route
-            path="/chat"
-            element={
-              isAuthenticated ? (
-                <ChatBox userRole={userRole} userId={patientId} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-        </Routes>
-        <Footer /> {/* Add Footer component here */}
-      </Router>
-    </AuthProvider>
+    <>
+      <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+      {chatRequest && (
+        <Notification message={chatRequest} onAccept={acceptChat} />
+      )}
+      <Routes>
+        <Route path="/" element={<Dashboard userRole={user?.role} />} />
+        <Route 
+          path="/my-health" 
+          element={
+            isAuthenticated ? <MyHealth /> : <Navigate to="/login" replace />
+          } 
+        />
+        <Route 
+          path="/scan-report" 
+          element={
+            isAuthenticated ? <ScanReport /> : <Navigate to="/login" replace />
+          } 
+        />
+        <Route path="/blog/*" element={<Blog />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/resources" element={<Resources />} />
+        <Route 
+          path="/signup" 
+          element={
+            isAuthenticated ? <Navigate to="/my-health" replace /> : <SignupForm />
+          } 
+        />
+        <Route 
+          path="/login" 
+          element={
+            isAuthenticated ? <Navigate to="/my-health" replace /> : <LoginForm />
+          } 
+        />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
+        <Route
+          path="/profile"
+          element={
+            isAuthenticated ? <PatientProfile /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            isAuthenticated ? (
+              <ChatBox userRole={user?.role} userId={user?.id} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+      </Routes>
+      <Footer />
+    </>
+  );
+};
+
+// Main App component
+const App = () => {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 };
 

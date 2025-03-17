@@ -24,29 +24,28 @@ const LoginForm = () => {
     setError("");
     try {
       const res = await axiosInstance.post("/auth/login", formData);
-      console.log("Logged in user:", res.data.user);
+      console.log("Login response:", res.data);
 
       // Store token and update auth context
       const userData = {
-        id: res.data.user.id,
-        name: res.data.user.name,
-        email: res.data.user.email,
-        role: res.data.user.role,
         token: res.data.token,
+        user: {
+          id: res.data.user.id,
+          name: res.data.user.name,
+          email: res.data.user.email,
+          role: res.data.user.role
+        }
       };
 
+      // Call login function from AuthContext
       login(userData);
 
-      // Redirect based on role
-      if (res.data.user.role === "doctor") {
-        navigate("/doctor-dashboard");
-      } else {
-        navigate("/patient-dashboard");
-      }
+      // Navigate to MyHealth page
+      navigate("/my-health");
     } catch (error) {
-      console.error(error.response ? error.response.data : error.message);
+      console.error("Login error:", error.response ? error.response.data : error);
       setError(
-        error.response?.data?.error || "Login failed. Please try again."
+        error.response?.data?.message || error.response?.data?.error || "Login failed. Please try again."
       );
     }
   };

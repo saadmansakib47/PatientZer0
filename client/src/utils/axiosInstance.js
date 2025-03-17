@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:5000/api', // Adjust base URL as needed
+    baseURL: 'http://localhost:5001/api', // Updated port to match server
 });
 
 // Add a request interceptor to include the token in headers

@@ -30,6 +30,7 @@ const passport = require("passport");
 const session = require("express-session");
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
+const blogRoutes = require("./routes/blogRoutes");
 const authenticateJWT = require("./middleware/auth");
 
 // Initialize Express app
@@ -56,6 +57,9 @@ console.log(`CORS configured with origin: ${clientUrl}`);
 
 app.use(express.json());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Session configuration
 app.use(
   session({
@@ -79,6 +83,7 @@ require("./config/passport");
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", authenticateJWT, messageRoutes);
+app.use("/api/blogs", blogRoutes);
 
 // MongoDB connection
 mongoose

@@ -1,7 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -24,6 +32,7 @@ export const AuthProvider = ({ children }) => {
             return;
           }
 
+          // Set user data from token
           setUser({
             id: decoded._id,
             name: decoded.name,
@@ -43,9 +52,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
-    setUser(userData);
-    setIsAuthenticated(true);
-    localStorage.setItem("token", userData.token);
+    try {
+      // Store token first
+      localStorage.setItem("token", userData.token);
+      
+      // Set user data directly from the response
+      setUser(userData.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Error during login:", error);
+      logout();
+    }
   };
 
   const logout = () => {
@@ -69,6 +86,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export default AuthContext;

@@ -55,16 +55,16 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           }
 
           console.log("Creating new user from Google profile");
-          // If user doesn't exist, create a new user
+          // If user doesn't exist, create a new user with default role as patient
           const newUser = new User({
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails[0].value,
             password: "google-oauth-" + Math.random().toString(36).substring(2), // Random password for Google users
-            role: "patient", // Default role - you may want to collect this info separately
+            role: "patient", // Default role as patient
             profilePhoto: profile.photos[0].value,
             additionalInfo: {
-              // Default values - you may want to collect this info separately
+              // Default values - can be updated later in profile
             },
           });
 
