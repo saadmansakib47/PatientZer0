@@ -2,12 +2,18 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { savedReportService } from '../services/savedReportService';
 import "./MyHealth.css";
 
 const MyHealth = () => {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
+  const [savedReports, setSavedReports] = useState([]);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [checkedConcerns, setCheckedConcerns] = useState({});
 
   useEffect(() => {
     // Check if we have a token in localStorage
@@ -18,10 +24,98 @@ const MyHealth = () => {
     }
 
     // If we're not loading and not authenticated, redirect to login
-    if (!loading && !isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate('/login');
     }
-  }, [loading, isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSavedReports();
+    }
+  }, [isAuthenticated]);
+
+  const fetchSavedReports = async () => {
+    try {
+      const reports = await savedReportService.getAllSavedReports();
+      setSavedReports(reports);
+      
+      // Initialize checked state for all concerns
+      const initialCheckedState = {};
+      reports.forEach(report => {
+        if (report.analysis?.urgentConcerns) {
+          report.analysis.urgentConcerns.forEach((concern, index) => {
+            const concernId = `${report._id}-${index}`;
+            initialCheckedState[concernId] = false;
+          });
+        }
+      });
+      setCheckedConcerns(initialCheckedState);
+    } catch (err) {
+      setError('Failed to fetch reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReportClick = async (report) => {
+    try {
+      setSelectedReport(report);
+    } catch (err) {
+      setError('Failed to fetch report details');
+    }
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    if (window.confirm('Are you sure you want to delete this report?')) {
+      try {
+        await savedReportService.deleteSavedReport(reportId);
+        setSavedReports(savedReports.filter(report => report._id !== reportId));
+        if (selectedReport?._id === reportId) {
+          setSelectedReport(null);
+        }
+      } catch (err) {
+        setError('Failed to delete report');
+      }
+    }
+  };
+
+  const handleCheckConcern = (reportId, concernIndex) => {
+    const concernId = `${reportId}-${concernIndex}`;
+    setCheckedConcerns(prev => ({
+      ...prev,
+      [concernId]: !prev[concernId]
+    }));
+  };
+
+  const handleDeleteConcern = (reportId, concernIndex) => {
+    if (window.confirm('Are you sure you want to delete this concern?')) {
+      setSavedReports(prevReports => {
+        return prevReports.map(report => {
+          if (report._id === reportId) {
+            const newUrgentConcerns = [...report.analysis.urgentConcerns];
+            newUrgentConcerns.splice(concernIndex, 1);
+            return {
+              ...report,
+              analysis: {
+                ...report.analysis,
+                urgentConcerns: newUrgentConcerns
+              }
+            };
+          }
+          return report;
+        });
+      });
+
+      // Remove the checked state for this concern
+      const concernId = `${reportId}-${concernIndex}`;
+      setCheckedConcerns(prev => {
+        const newState = { ...prev };
+        delete newState[concernId];
+        return newState;
+      });
+    }
+  };
 
   // If still loading, show loading state
   if (loading) {
@@ -85,6 +179,48 @@ const MyHealth = () => {
         ))}
       </div>
 
+      {/* Urgent Health Concerns Checklist */}
+      <div className="urgent-concerns-section">
+        <h2>Urgent Health Concerns</h2>
+        <div className="concerns-list">
+          {savedReports.map(report => {
+            if (!report.analysis?.urgentConcerns?.length) return null;
+            
+            return (
+              <div key={report._id} className="report-concerns">
+                <h3>Report from {new Date(report.createdAt).toLocaleDateString()}</h3>
+                <ul className="concerns-checklist">
+                  {report.analysis.urgentConcerns.map((concern, index) => (
+                    <li key={`${report._id}-${index}`} className="concern-item">
+                      <label className="concern-label">
+                        <input
+                          type="checkbox"
+                          checked={checkedConcerns[`${report._id}-${index}`] || false}
+                          onChange={() => handleCheckConcern(report._id, index)}
+                        />
+                        <span className={checkedConcerns[`${report._id}-${index}`] ? 'checked' : ''}>
+                          {concern}
+                        </span>
+                      </label>
+                      <button 
+                        className="delete-concern-btn"
+                        onClick={() => handleDeleteConcern(report._id, index)}
+                        title="Delete concern"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+          {savedReports.every(report => !report.analysis?.urgentConcerns?.length) && (
+            <p className="no-concerns">No urgent concerns found in your reports.</p>
+          )}
+        </div>
+      </div>
+
       {/* Health Tips Section */}
       <div className="health-tips">
         <h2>Health Tips</h2>
@@ -139,6 +275,77 @@ const MyHealth = () => {
 
       {/* Add New Metric Button */}
       <button className="add-metric-btn">Add New Metric</button>
+
+      {error && <div className="error-message">{error}</div>}
+      
+      <div className="saved-reports-section">
+        <h2>Saved Reports</h2>
+        <div className="reports-grid">
+          {savedReports.map(report => (
+            <div key={report._id} className="report-card">
+              <h3>{report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'Unnamed Report'}</h3>
+              <div className="report-actions">
+                <button onClick={() => handleReportClick(report)}>
+                  View Details
+                </button>
+                <button 
+                  className="delete-button"
+                  onClick={() => handleDeleteReport(report._id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+          {savedReports.length === 0 && (
+            <p>No saved reports found.</p>
+          )}
+        </div>
+      </div>
+
+      {selectedReport && (
+        <div className="report-details">
+          <h2>Report Details</h2>
+          <div className="report-content">
+            <h3>Analysis</h3>
+            {selectedReport.analysis && (
+              <>
+                <div className="section">
+                  <h4>Key Findings</h4>
+                  <ul>
+                    {selectedReport.analysis.keyFindings?.map((finding, index) => (
+                      <li key={index}>{finding}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="section">
+                  <h4>Recommendations</h4>
+                  <ul>
+                    {selectedReport.analysis.recommendations?.map((rec, index) => (
+                      <li key={index}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="section">
+                  <h4>Urgent Concerns</h4>
+                  <ul>
+                    {selectedReport.analysis.urgentConcerns?.map((concern, index) => (
+                      <li key={index}>{concern}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="section">
+                  <h4>Simplified Explanation</h4>
+                  <p>{selectedReport.analysis.simplifiedExplanation}</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
