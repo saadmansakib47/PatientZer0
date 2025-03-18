@@ -33,6 +33,11 @@ const messageRoutes = require("./routes/messages");
 const blogRoutes = require("./routes/blogRoutes");
 const authenticateJWT = require("./middleware/auth");
 const savedReportRoutes = require('./routes/savedReportRoutes');
+const healthMetricRoutes = require('./routes/healthMetricRoutes');
+const healthGoalRoutes = require('./routes/healthGoalRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const healthActivityRoutes = require('./routes/healthActivityRoutes');
+const forumRoutes = require('./routes/forumRoutes');
 
 // Initialize Express app
 const app = express();
@@ -86,6 +91,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", authenticateJWT, messageRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/saved-reports", savedReportRoutes);
+app.use("/api/health-metrics", healthMetricRoutes);
+app.use("/api/health-goals", healthGoalRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/health-activities", healthActivityRoutes);
+app.use("/api/forum", forumRoutes);
 
 // MongoDB connection
 mongoose
@@ -99,7 +109,5 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => console.log("User disconnected:", socket.id));
 });
 
-// Start server
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Export the app
+module.exports = app;

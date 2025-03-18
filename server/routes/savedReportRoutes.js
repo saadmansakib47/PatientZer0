@@ -1,24 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateJWT } = require('../middleware/auth');
-const savedReportController = require('../controllers/savedReportController');
+const authenticateJWT = require('../middleware/auth');
+const {
+  getSavedReports,
+  saveReport,
+  getReportById,
+  updateReport,
+  deleteReport,
+} = require('../controllers/savedReportController');
 
 // All routes require authentication
 router.use(authenticateJWT);
 
-// Get all saved reports for the authenticated user
-router.get('/', savedReportController.getSavedReports);
+// Get all saved reports for the user
+router.get('/', getSavedReports);
 
 // Save a new report
-router.post('/', savedReportController.saveReport);
+router.post('/', saveReport);
 
-// Get a single saved report
-router.get('/:id', savedReportController.getSavedReport);
+// Get a single report
+router.get('/:id', getReportById);
 
-// Update a saved report
-router.put('/:id', savedReportController.updateSavedReport);
+// Update a report
+router.put('/:id', updateReport);
 
-// Delete a saved report
-router.delete('/:id', savedReportController.deleteSavedReport);
+// Delete a report
+router.delete('/:id', deleteReport);
 
 module.exports = router; 

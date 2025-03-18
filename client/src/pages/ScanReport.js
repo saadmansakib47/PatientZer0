@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, FileText, AlertCircle, Loader2, Clock, List, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { savedReportService } from '../services/savedReportService';
+import savedReportService from '../services/savedReportService';
 import './ScanReport.css';
 
 function ScanReport() {
@@ -63,22 +63,72 @@ function ScanReport() {
       return;
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
     setShowSaveDialog(true);
   };
 
   const handleSaveSubmit = async (e) => {
     e.preventDefault();
     try {
-      const savedReport = analysisResult;
-      if (savedReport) {
-        setSuccess('Report saved successfully!');
-        setShowSaveDialog(false);
-        setReportName('');
-      } else {
-        setError('No report data available to save.');
+      if (!reportName) {
+        setError('Please enter a report name');
+        return;
       }
+
+      if (!analysisResult) {
+        setError('No analysis data available to save');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      // Format the report data
+      const reportData = {
+        name: reportName.trim(),
+        scanData: {
+          text: analysisResult.text || '',
+          analysis: {
+            keyFindings: Array.isArray(analysisResult.analysis?.keyFindings) 
+              ? analysisResult.analysis.keyFindings 
+              : [],
+            recommendations: Array.isArray(analysisResult.analysis?.recommendations) 
+              ? analysisResult.analysis.recommendations 
+              : [],
+            urgentConcerns: Array.isArray(analysisResult.analysis?.urgentConcerns) 
+              ? analysisResult.analysis.urgentConcerns 
+              : [],
+            simplifiedExplanation: analysisResult.analysis?.simplifiedExplanation || ''
+          }
+        },
+        scanType: 'xray', // Default to xray since we're analyzing medical reports
+        scanDate: new Date().toISOString(),
+        notes: ''
+      };
+
+      console.log('Saving report data:', JSON.stringify(reportData, null, 2)); // Debug log
+      const savedReport = await savedReportService.saveReport(reportData);
+      console.log('Report saved successfully:', savedReport); // Debug log
+      setSuccess('Report saved successfully!');
+      setShowSaveDialog(false);
+      setReportName('');
     } catch (err) {
-      setError('Failed to save report. Please try again.');
+      console.error('Error saving report:', err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        navigate('/login');
+      } else {
+        // Display the error message from the server response if available
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to save report. Please try again.';
+        setError(errorMessage);
+      }
     }
   };
 
@@ -207,6 +257,7 @@ function ScanReport() {
                     value={reportName}
                     onChange={(e) => setReportName(e.target.value)}
                     placeholder="Enter report name"
+                    required
                   />
                 </div>
                 {error && <div className="error-message">{error}</div>}
