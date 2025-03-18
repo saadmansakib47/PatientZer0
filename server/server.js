@@ -32,6 +32,7 @@ const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
 const blogRoutes = require("./routes/blogRoutes");
 const authenticateJWT = require("./middleware/auth");
+const savedReportRoutes = require('./routes/savedReportRoutes');
 
 // Initialize Express app
 const app = express();
@@ -84,6 +85,7 @@ require("./config/passport");
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", authenticateJWT, messageRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use("/api/saved-reports", savedReportRoutes);
 
 // MongoDB connection
 mongoose

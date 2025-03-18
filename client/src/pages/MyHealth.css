@@ -166,3 +166,119 @@
   background-color: #2b6cb0;
   transform: translateY(-3px);
 }
+
+.saved-reports-section,
+.reports-grid,
+.report-card,
+.report-actions,
+.report-details {
+  display: none;
+}
+
+.error-message {
+  color: #dc3545;
+  padding: 0.5rem;
+  margin: 1rem 0;
+  background-color: #f8d7da;
+  border-radius: 4px;
+}
+
+.success-message {
+  color: #28a745;
+  padding: 0.5rem;
+  margin: 1rem 0;
+  background-color: #d4edda;
+  border-radius: 4px;
+}
+
+.urgent-concerns-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.urgent-concerns-section h2 {
+  color: #dc3545;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.concerns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.report-concerns {
+  border-left: 3px solid #dc3545;
+  padding-left: 1rem;
+}
+
+.report-concerns h3 {
+  color: #6c757d;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.concerns-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.concern-item {
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.concern-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  flex: 1;
+}
+
+.concern-label input[type="checkbox"] {
+  margin-top: 0.25rem;
+}
+
+.concern-label span {
+  color: #2c3e50;
+  line-height: 1.4;
+}
+
+.concern-label span.checked {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.delete-concern-btn {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 0.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  margin-top: -0.25rem;
+}
+
+.delete-concern-btn:hover {
+  opacity: 1;
+}
+
+.no-concerns {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
