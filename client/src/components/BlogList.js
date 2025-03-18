@@ -6,70 +6,80 @@ import './BlogList.css';
 const BlogList = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
 
   const fetchBlogs = async () => {
     try {
       const response = await axiosInstance.get('/blogs');
-      setBlogs(response.data.blogs);
-      setTotalPages(response.data.totalPages);
+      console.log('Blog response:', response.data);
+      setBlogs(Array.isArray(response.data) ? response.data : response.data.blogs || []);
     } catch (err) {
-      setError('Failed to fetch blog posts. Please try again later.');
+      setError('Failed to fetch blogs');
       console.error('Error fetching blogs:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchBlogs();
-  }, [currentPage, searchQuery, selectedTag]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    fetchBlogs();
-  };
-
-  const handleTagClick = (tag) => {
-    setSelectedTag(tag === selectedTag ? '' : tag);
-    setCurrentPage(1);
-  };
-
   if (loading) {
-    return <div className="loading">Loading blog posts...</div>;
+    return <div className="blog-loading">Loading blogs...</div>;
   }
 
   if (error) {
-    return <div className="error">{error}</div>;
+    return <div className="blog-error">{error}</div>;
   }
 
   return (
-    <div className="blog-list">
-      {blogs.map((blog) => (
-        <div key={blog._id} className="blog-card">
-          <img
-            src={blog.thumbnail || '/default-blog-thumbnail.jpg'}
-            alt={blog.title}
-          />
-          <div className="blog-card-content">
-            <h3>{blog.title}</h3>
-            <p className="blog-excerpt">{blog.excerpt}</p>
-            <div className="blog-meta">
-              <span>By {blog.author.name}</span>
-              <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
-              <span>{blog.comments.length} comments</span>
+    <div className="blog-list-container">
+      <div className="blog-list-header">
+        <h1>Health & Wellness Blog</h1>
+        <Link to="/blog/new" className="create-blog-btn">
+          Create New Post
+        </Link>
+      </div>
+
+      <div className="blog-grid">
+        {blogs.map(blog => (
+          <Link to={`/blog/${blog._id}`} key={blog._id} className="blog-card">
+            {blog.thumbnail && (
+              <div className="blog-thumbnail">
+                <img src={blog.thumbnail} alt={blog.title} />
+              </div>
+            )}
+            <div className="blog-card-content">
+              <h2>{blog.title}</h2>
+              <p className="blog-excerpt">{blog.excerpt || blog.content.substring(0, 150)}...</p>
+              <div className="blog-meta">
+                <span className="blog-date">
+                  {new Date(blog.createdAt).toLocaleDateString()}
+                </span>
+                {blog.tags && blog.tags.length > 0 && (
+                  <div className="blog-tags">
+                    {blog.tags.map((tag, index) => (
+                      <span key={index} className="tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <Link to={`/blog/${blog._id}`} className="read-more">
-              Read More
-            </Link>
-          </div>
+          </Link>
+        ))}
+      </div>
+
+      {blogs.length === 0 && (
+        <div className="no-blogs">
+          <p>No blog posts yet. Be the first to create one!</p>
+          <Link to="/blog/new" className="create-blog-btn">
+            Create New Post
+          </Link>
         </div>
-      ))}
+      )}
     </div>
   );
 };

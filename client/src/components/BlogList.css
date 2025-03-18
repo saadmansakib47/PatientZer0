@@ -1,20 +1,139 @@
 .blog-list-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 2rem;
 }
 
 .blog-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
 }
 
-.blog-list-header h2 {
+.blog-list-header h1 {
   font-size: 2rem;
-  color: #2b6cb0;
+  color: #2c3e50;
   margin: 0;
+}
+
+.create-blog-btn {
+  background-color: #3498db;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.create-blog-btn:hover {
+  background-color: #2980b9;
+}
+
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.blog-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+.blog-card:hover {
+  transform: translateY(-4px);
+}
+
+.blog-thumbnail {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.blog-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.blog-card-content {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.blog-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  color: #2c3e50;
+}
+
+.blog-excerpt {
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.blog-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.blog-date {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.blog-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background-color: #f0f2f5;
+  color: #666;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+}
+
+.no-blogs {
+  text-align: center;
+  padding: 3rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.no-blogs p {
+  margin-bottom: 1.5rem;
+  color: #666;
+}
+
+.blog-loading {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.blog-error {
+  text-align: center;
+  padding: 3rem;
+  color: #dc3545;
+  background: #f8d7da;
+  border-radius: 8px;
 }
 
 .blog-search-form {
@@ -52,114 +171,6 @@
   background-color: #3182ce;
 }
 
-.blog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
-  margin-bottom: 40px;
-}
-
-.blog-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  text-decoration: none;
-  color: inherit;
-}
-
-.blog-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.blog-thumbnail {
-  position: relative;
-  padding-top: 56.25%; /* 16:9 aspect ratio */
-  overflow: hidden;
-}
-
-.blog-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.blog-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #718096;
-  font-size: 1rem;
-}
-
-.blog-content {
-  padding: 20px;
-}
-
-.blog-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 10px 0;
-  line-height: 1.4;
-}
-
-.blog-excerpt {
-  color: #4a5568;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin-bottom: 15px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.blog-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.875rem;
-  color: #718096;
-  margin-bottom: 15px;
-}
-
-.blog-author {
-  font-weight: 500;
-  color: #4a5568;
-}
-
-.blog-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.blog-tag {
-  background-color: #e2e8f0;
-  color: #4a5568;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.blog-tag:hover {
-  background-color: #cbd5e0;
-}
-
 .blog-pagination {
   display: flex;
   justify-content: center;
@@ -191,18 +202,6 @@
 .pagination-info {
   color: #4a5568;
   font-size: 0.95rem;
-}
-
-.blog-list-loading,
-.blog-list-error {
-  text-align: center;
-  padding: 40px;
-  font-size: 1.1rem;
-  color: #4a5568;
-}
-
-.blog-list-error {
-  color: #e53e3e;
 }
 
 /* Responsive Design */
