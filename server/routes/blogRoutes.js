@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const authenticateJWT = require('../middleware/auth');
+const { authenticateJWT } = require('../middleware/auth');
 const {
   upload,
   getBlogs,

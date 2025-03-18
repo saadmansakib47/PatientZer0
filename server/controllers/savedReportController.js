@@ -1,7 +1,7 @@
 const SavedReport = require('../models/SavedReport');
 
 // Get all saved reports for a user
-exports.getSavedReports = async (req, res) => {
+const getSavedReports = async (req, res) => {
   try {
     const reports = await SavedReport.find({ userId: req.user._id })
       .sort({ createdAt: -1 });
@@ -12,7 +12,7 @@ exports.getSavedReports = async (req, res) => {
 };
 
 // Save a new report
-exports.saveReport = async (req, res) => {
+const saveReport = async (req, res) => {
   try {
     const { name, urgentConcerns } = req.body;
     const report = new SavedReport({
@@ -28,7 +28,7 @@ exports.saveReport = async (req, res) => {
 };
 
 // Get a single saved report
-exports.getSavedReport = async (req, res) => {
+const getSavedReport = async (req, res) => {
   try {
     const report = await SavedReport.findOne({
       _id: req.params.id,
@@ -44,7 +44,7 @@ exports.getSavedReport = async (req, res) => {
 };
 
 // Update a saved report
-exports.updateSavedReport = async (req, res) => {
+const updateSavedReport = async (req, res) => {
   try {
     const { name } = req.body;
     const report = await SavedReport.findOneAndUpdate(
@@ -62,7 +62,7 @@ exports.updateSavedReport = async (req, res) => {
 };
 
 // Delete a saved report
-exports.deleteSavedReport = async (req, res) => {
+const deleteSavedReport = async (req, res) => {
   try {
     const report = await SavedReport.findOneAndDelete({
       _id: req.params.id,
@@ -75,4 +75,12 @@ exports.deleteSavedReport = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error deleting report' });
   }
+};
+
+module.exports = {
+  getSavedReports,
+  saveReport,
+  getSavedReport,
+  updateSavedReport,
+  deleteSavedReport
 }; 

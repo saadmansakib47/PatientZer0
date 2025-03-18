@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
-const authenticateJWT = require('../middleware/auth'); // Import the authentication middleware
+const { authenticateJWT } = require('../middleware/auth'); // Import the authentication middleware
 
 // Get messages for a specific user (doctor or patient)
 router.get('/:userId', authenticateJWT, async (req, res) => {

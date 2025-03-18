@@ -31,7 +31,7 @@ const session = require("express-session");
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
 const blogRoutes = require("./routes/blogRoutes");
-const authenticateJWT = require("./middleware/auth");
+const { authenticateJWT } = require("./middleware/auth");
 const savedReportRoutes = require('./routes/savedReportRoutes');
 
 // Initialize Express app

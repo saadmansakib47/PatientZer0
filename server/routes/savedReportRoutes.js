@@ -7,18 +7,18 @@ const savedReportController = require('../controllers/savedReportController');
 router.use(authenticateJWT);
 
 // Get all saved reports for the authenticated user
-router.get('/', savedReportController.getSavedReports);
+router.get('/', (req, res) => savedReportController.getSavedReports(req, res));
 
 // Save a new report
-router.post('/', savedReportController.saveReport);
+router.post('/', (req, res) => savedReportController.saveReport(req, res));
 
 // Get a single saved report
-router.get('/:id', savedReportController.getSavedReport);
+router.get('/:id', (req, res) => savedReportController.getSavedReport(req, res));
 
 // Update a saved report
-router.put('/:id', savedReportController.updateSavedReport);
+router.put('/:id', (req, res) => savedReportController.updateSavedReport(req, res));
 
 // Delete a saved report
-router.delete('/:id', savedReportController.deleteSavedReport);
+router.delete('/:id', (req, res) => savedReportController.deleteSavedReport(req, res));
 
 module.exports = router; 
