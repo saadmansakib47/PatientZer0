@@ -1,84 +1,144 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Set up axios interceptor for authorization token
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          // Decode token and set user details
-          const decoded = jwtDecode(token);
-
-          // Check if token is expired
-          const currentTime = Date.now() / 1000;
-          if (decoded.exp < currentTime) {
-            // Token expired, log out
-            logout();
-            return;
-          }
-
-          // Set user data from token
-          setUser({
-            id: decoded._id,
-            name: decoded.name,
-            email: decoded.email,
-            role: decoded.role,
-          });
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.error("Error decoding token:", error);
-          logout();
+    const interceptor = axios.interceptors.request.use(
+      (config) => {
+        const storedToken = localStorage.getItem("token");
+        if (storedToken) {
+          config.headers["Authorization"] = `Bearer ${storedToken}`;
         }
-      }
-      setLoading(false);
-    };
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
 
-    checkAuth();
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
   }, []);
 
-  const login = (userData) => {
-    try {
-      // Store token first
-      localStorage.setItem("token", userData.token);
-      
-      // Set user data directly from the response
-      setUser(userData.user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error("Error during login:", error);
-      logout();
+  // Check if user is authenticated on initial load
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        setLoading(true);
+
+        // Get token from localStorage
+        const storedToken = localStorage.getItem("token");
+        if (!storedToken) {
+          setLoading(false);
+          return;
+        }
+
+        setToken(storedToken);
+
+        // Get user from localStorage initially to prevent flicker
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch (e) {
+            console.error("Error parsing stored user:", e);
+          }
+        }
+
+        // Verify token with server
+        try {
+          console.log(
+            "Verifying token with server:",
+            storedToken.substring(0, 20) + "..."
+          );
+          const response = await axios.get(
+            "http://localhost:5001/api/auth/verify",
+            {
+              headers: { Authorization: `Bearer ${storedToken}` },
+            }
+          );
+
+          if (response.data.user) {
+            console.log(
+              "Token verified successfully, user info:",
+              response.data.user
+            );
+            setUser(response.data.user);
+            localStorage.setItem("user", JSON.stringify(response.data.user));
+          }
+        } catch (serverError) {
+          console.error("Token verification failed:", serverError);
+          // If verification fails, log out
+          if (serverError.response && serverError.response.status >= 401) {
+            console.log("Invalid token, logging out");
+            logout();
+          }
+        }
+      } catch (e) {
+        console.error("Auth initialization error:", e);
+        setError("Authentication failed. Please log in again.");
+        logout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  const login = async (userData, authToken) => {
+    if (!authToken) {
+      console.error("Login error: No auth token provided");
+      setError("Authentication failed. No token received.");
+      return;
     }
+
+    console.log("Login with token:", authToken.substring(0, 20) + "...");
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem("token", authToken);
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    // Update axios default headers
+    axios.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
   };
 
   const logout = () => {
     setUser(null);
-    setIsAuthenticated(false);
+    setToken(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    // Clear axios default headers
+    delete axios.defaults.headers.common["Authorization"];
+  };
+
+  const updateUser = (updatedUserData) => {
+    const updatedUser = { ...user, ...updatedUserData };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
   return (
     <AuthContext.Provider
       value={{
-        isAuthenticated,
         user,
+        token,
         loading,
+        error,
+        isAuthenticated: !!user,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

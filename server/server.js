@@ -32,7 +32,13 @@ const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
 const blogRoutes = require("./routes/blogRoutes");
 const { authenticateJWT } = require("./middleware/auth");
-const savedReportRoutes = require('./routes/savedReportRoutes');
+const savedReportRoutes = require("./routes/savedReportRoutes");
+const doctorRoutes = require("./routes/doctorRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const healthRoutes = require("./routes/healthRoutes");
+// const patientRoutes = require("./routes/patientRoutes");
+// const communityRoutes = require("./routes/communityRoutes");
+// const doctorAPIRoutes = require("./routes/doctorAPIRoutes");
 
 // Initialize Express app
 const app = express();
@@ -59,7 +65,9 @@ console.log(`CORS configured with origin: ${clientUrl}`);
 app.use(express.json());
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Also serve from the root uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Session configuration
 app.use(
@@ -83,9 +91,13 @@ require("./config/passport");
 
 // Routes
 app.use("/api/auth", authRoutes);
+// app.use("/api/patient", patientRoutes);
 app.use("/api/messages", authenticateJWT, messageRoutes);
+app.use("/api/doctor", doctorRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/saved-reports", savedReportRoutes);
+app.use("/api/health", healthRoutes);
 
 // MongoDB connection
 mongoose
@@ -99,7 +111,32 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => console.log("User disconnected:", socket.id));
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Global error handler:", err);
+  const statusCode = err.statusCode || 500;
+  let errorMessage = err.message || "An unexpected error occurred";
+
+  // Add more details for validation errors
+  if (err.name === "ValidationError") {
+    const validationErrors = Object.keys(err.errors)
+      .map((key) => {
+        return `${key}: ${err.errors[key].message}`;
+      })
+      .join(", ");
+    errorMessage = `Validation error: ${validationErrors}`;
+  }
+
+  res.status(statusCode).json({
+    error: errorMessage,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  });
+});
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Export app for testing
+module.exports = app;

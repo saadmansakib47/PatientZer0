@@ -16,33 +16,51 @@ const OAuthCallback = () => {
 
         if (!token) {
           console.error("No token found in URL");
-          navigate("/login");
+          navigate("/login?error=no_token");
           return;
         }
 
-        // Store token and redirect
-        localStorage.setItem("token", token);
-
         // Decode token to get user info
-        const base64Url = token.split(".")[1];
-        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split("")
-            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-            .join("")
-        );
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
 
-        const { _id, name, email, role } = JSON.parse(jsonPayload);
+          const { _id, name, email, role } = JSON.parse(jsonPayload);
 
-        // Update auth context
-        login({ id: _id, name, email, role, token });
+          const userData = {
+            id: _id,
+            name,
+            email,
+            role,
+            isActive: true,
+          };
 
-        // Always redirect to MyHealth page
-        navigate("/my-health");
+          console.log("Decoded user data:", userData);
+
+          // Update auth context
+          await login(userData, token);
+
+          // Navigate to MyHealth or dashboard based on role
+          if (role === "admin") {
+            navigate("/admin/doctor-verifications");
+          } else if (role === "doctor") {
+            navigate("/doctor/dashboard");
+          } else {
+            navigate("/my-health");
+          }
+        } catch (decodeError) {
+          console.error("Error decoding token:", decodeError);
+          navigate("/login?error=invalid_token");
+        }
       } catch (error) {
         console.error("Error processing OAuth callback:", error);
-        navigate("/login");
+        navigate("/login?error=auth_failed");
       }
     };
 
