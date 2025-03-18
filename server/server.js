@@ -28,6 +28,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const passport = require("passport");
 const session = require("express-session");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
 const blogRoutes = require("./routes/blogRoutes");
@@ -47,6 +48,7 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] },
 });
 const PORT = process.env.PORT || 5001;
+const BLOG_SERVER_PORT = 8000;
 
 // CORS configuration
 const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
@@ -98,6 +100,37 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/saved-reports", savedReportRoutes);
 app.use("/api/health", healthRoutes);
+
+// Blog Integration - Proxy to the blog server
+// This will forward requests from /blog-api/* to the blog server
+app.use(
+  "/blog-api",
+  createProxyMiddleware({
+    target: `http://localhost:${BLOG_SERVER_PORT}`,
+    changeOrigin: true,
+    pathRewrite: {
+      "^/blog-api": "/", // Remove /blog-api prefix when forwarding
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      // If the main app has an authentication token, can transfer it to the blog server
+      if (req.headers.authorization) {
+        proxyReq.setHeader("Authorization", req.headers.authorization);
+      }
+    },
+  })
+);
+
+// Blog static files proxy - for images and other static assets
+app.use(
+  "/blog-static",
+  createProxyMiddleware({
+    target: `http://localhost:${BLOG_SERVER_PORT}`,
+    changeOrigin: true,
+    pathRewrite: {
+      "^/blog-static": "/", // Remove /blog-static prefix when forwarding
+    },
+  })
+);
 
 // MongoDB connection
 mongoose

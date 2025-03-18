@@ -2,122 +2,174 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { savedReportService } from '../services/savedReportService';
+import { savedReportService } from "../services/savedReportService";
+import { healthMetricsService } from "../services/healthMetricsService";
+import { appointmentsService } from "../services/appointmentsService";
+import { medicationsService } from "../services/medicationsService";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { format } from "date-fns";
+import AddMetricModal from "../components/modals/AddMetricModal";
+import AddMedicationModal from "../components/modals/AddMedicationModal";
+import BookAppointmentModal from "../components/modals/BookAppointmentModal";
+import ReportDetailsModal from "../components/modals/ReportDetailsModal";
 import "./MyHealth.css";
 
 const MyHealth = () => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
+
+  // State management
+  const [activeTab, setActiveTab] = useState("overview");
+  const [healthMetrics, setHealthMetrics] = useState([]);
+  const [healthGoals, setHealthGoals] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [medications, setMedications] = useState([]);
   const [savedReports, setSavedReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [checkedConcerns, setCheckedConcerns] = useState({});
+  const [showAddMetricModal, setShowAddMetricModal] = useState(false);
+  const [showAddMedicationModal, setShowAddMedicationModal] = useState(false);
+  const [showBookAppointmentModal, setShowBookAppointmentModal] =
+    useState(false);
 
+  // Authentication check
   useEffect(() => {
-    // Check if we have a token in localStorage
     const token = localStorage.getItem("token");
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    // If we're not loading and not authenticated, redirect to login
-    if (!authLoading && !isAuthenticated) {
-      navigate('/login');
+    if (!token || (!authLoading && !isAuthenticated)) {
+      navigate("/login");
     }
   }, [authLoading, isAuthenticated, navigate]);
 
+  // Data fetching
   useEffect(() => {
     if (isAuthenticated) {
-      fetchSavedReports();
+      fetchAllData();
     }
   }, [isAuthenticated]);
 
-  const fetchSavedReports = async () => {
+  const fetchAllData = async () => {
     try {
-      const reports = await savedReportService.getAllSavedReports();
+      setLoading(true);
+      const [metrics, goals, appts, meds, reports] = await Promise.all([
+        healthMetricsService.getHealthMetrics(),
+        healthMetricsService.getHealthGoals(),
+        appointmentsService.getAppointments(),
+        medicationsService.getMedications(),
+        savedReportService.getAllSavedReports(),
+      ]);
+
+      setHealthMetrics(metrics);
+      setHealthGoals(goals);
+      setAppointments(appts);
+      setMedications(meds);
       setSavedReports(reports);
-      
-      // Initialize checked state for all concerns
-      const initialCheckedState = {};
-      reports.forEach(report => {
-        if (report.analysis?.urgentConcerns) {
-          report.analysis.urgentConcerns.forEach((concern, index) => {
-            const concernId = `${report._id}-${index}`;
-            initialCheckedState[concernId] = false;
-          });
-        }
-      });
-      setCheckedConcerns(initialCheckedState);
     } catch (err) {
-      setError('Failed to fetch reports');
+      setError("Failed to fetch health data");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReportClick = async (report) => {
+  // Event handlers
+  const handleAddMetric = async (metricData) => {
     try {
-      setSelectedReport(report);
+      await healthMetricsService.updateHealthMetrics(metricData);
+      fetchAllData();
+      setShowAddMetricModal(false);
     } catch (err) {
-      setError('Failed to fetch report details');
+      setError("Failed to add metric");
     }
   };
 
-  const handleDeleteReport = async (reportId) => {
-    if (window.confirm('Are you sure you want to delete this report?')) {
+  const handleAddMedication = async (medicationData) => {
+    try {
+      await medicationsService.addMedication(medicationData);
+      fetchAllData();
+      setShowAddMedicationModal(false);
+    } catch (err) {
+      setError("Failed to add medication");
+    }
+  };
+
+  const handleBookAppointment = async (appointmentData) => {
+    try {
+      await appointmentsService.createAppointment(appointmentData);
+      fetchAllData();
+      setShowBookAppointmentModal(false);
+    } catch (err) {
+      setError("Failed to book appointment");
+    }
+  };
+
+  const handleTrackMedication = async (medicationId, intakeData) => {
+    try {
+      await medicationsService.trackMedicationIntake(medicationId, intakeData);
+      fetchAllData();
+    } catch (err) {
+      setError("Failed to track medication");
+    }
+  };
+
+  const handleDeleteMedication = async (medicationId) => {
+    if (window.confirm("Are you sure you want to delete this medication?")) {
       try {
-        await savedReportService.deleteSavedReport(reportId);
-        setSavedReports(savedReports.filter(report => report._id !== reportId));
-        if (selectedReport?._id === reportId) {
-          setSelectedReport(null);
-        }
+        await medicationsService.deleteMedication(medicationId);
+        fetchAllData();
       } catch (err) {
-        setError('Failed to delete report');
+        setError("Failed to delete medication");
       }
     }
   };
 
-  const handleCheckConcern = (reportId, concernIndex) => {
-    const concernId = `${reportId}-${concernIndex}`;
-    setCheckedConcerns(prev => ({
-      ...prev,
-      [concernId]: !prev[concernId]
-    }));
-  };
-
-  const handleDeleteConcern = (reportId, concernIndex) => {
-    if (window.confirm('Are you sure you want to delete this concern?')) {
-      setSavedReports(prevReports => {
-        return prevReports.map(report => {
-          if (report._id === reportId) {
-            const newUrgentConcerns = [...report.analysis.urgentConcerns];
-            newUrgentConcerns.splice(concernIndex, 1);
-            return {
-              ...report,
-              analysis: {
-                ...report.analysis,
-                urgentConcerns: newUrgentConcerns
-              }
-            };
-          }
-          return report;
-        });
-      });
-
-      // Remove the checked state for this concern
-      const concernId = `${reportId}-${concernIndex}`;
-      setCheckedConcerns(prev => {
-        const newState = { ...prev };
-        delete newState[concernId];
-        return newState;
-      });
+  const handleRescheduleAppointment = async (appointmentId) => {
+    try {
+      // For now, just show the booking modal with pre-filled data
+      const appointment = appointments.find((a) => a.id === appointmentId);
+      if (appointment) {
+        setShowBookAppointmentModal(true);
+      }
+    } catch (err) {
+      setError("Failed to reschedule appointment");
     }
   };
 
-  // If still loading, show loading state
+  const handleCancelAppointment = async (appointmentId) => {
+    if (window.confirm("Are you sure you want to cancel this appointment?")) {
+      try {
+        await appointmentsService.deleteAppointment(appointmentId);
+        fetchAllData();
+      } catch (err) {
+        setError("Failed to cancel appointment");
+      }
+    }
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    if (window.confirm("Are you sure you want to delete this report?")) {
+      try {
+        await savedReportService.deleteSavedReport(reportId);
+        setSavedReports(
+          savedReports.filter((report) => report._id !== reportId)
+        );
+        if (selectedReport?._id === reportId) {
+          setSelectedReport(null);
+        }
+      } catch (err) {
+        setError("Failed to delete report");
+      }
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div className="loading-container">
@@ -127,224 +179,360 @@ const MyHealth = () => {
     );
   }
 
-  // If not authenticated, don't render anything (will redirect)
+  // Not authenticated
   if (!isAuthenticated) {
     return null;
   }
 
-  const healthMetrics = [
-    { title: "Heart Rate", value: "72 bpm", icon: "❤️" },
-    { title: "Blood Pressure", value: "120/80 mmHg", icon: "🩸" },
-    { title: "Blood Sugar", value: "90 mg/dL", icon: "🍬" },
-    { title: "Oxygen Level", value: "98%", icon: "💧" },
-    { title: "Cholesterol", value: "180 mg/dL", icon: "🍲" },
-  ];
-
-  const healthTips = [
-    "Drink at least 8 glasses of water daily.",
-    "Maintain a balanced diet rich in fruits and vegetables.",
-    "Exercise for 30 minutes daily to improve heart health.",
-    "Monitor your blood sugar regularly if you have diabetes.",
-  ];
-
-  const recentActivities = [
-    { date: "2024-11-05", activity: "Routine blood test" },
-    { date: "2024-11-01", activity: "Monthly check-up" },
-    { date: "2024-10-28", activity: "Dental cleaning" },
-  ];
-
-  const healthGoals = [
-    { goal: "Daily Steps", progress: 7000, target: 10000 },
-    { goal: "Calories Burned", progress: 1500, target: 2000 },
-    { goal: "Sleep Hours", progress: 6, target: 8 },
-  ];
-
   return (
     <div className="my-health">
-      <h1 className="my-health-title">My Health Dashboard</h1>
-      <p className="my-health-subtitle">
-        Welcome back, {user?.name}! Track and manage your vital health metrics.
-      </p>
-
-      {/* Health Metrics Section */}
-      <div className="health-metrics">
-        {healthMetrics.map((metric, index) => (
-          <div className="metric-card" key={index}>
-            <div className="metric-icon">{metric.icon}</div>
-            <div className="metric-details">
-              <h3 className="metric-title">{metric.title}</h3>
-              <p className="metric-value">{metric.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Urgent Health Concerns Checklist */}
-      <div className="urgent-concerns-section">
-        <h2>Urgent Health Concerns</h2>
-        <div className="concerns-list">
-          {savedReports.map(report => {
-            if (!report.analysis?.urgentConcerns?.length) return null;
-            
-            return (
-              <div key={report._id} className="report-concerns">
-                <h3>Report from {new Date(report.createdAt).toLocaleDateString()}</h3>
-                <ul className="concerns-checklist">
-                  {report.analysis.urgentConcerns.map((concern, index) => (
-                    <li key={`${report._id}-${index}`} className="concern-item">
-                      <label className="concern-label">
-                        <input
-                          type="checkbox"
-                          checked={checkedConcerns[`${report._id}-${index}`] || false}
-                          onChange={() => handleCheckConcern(report._id, index)}
-                        />
-                        <span className={checkedConcerns[`${report._id}-${index}`] ? 'checked' : ''}>
-                          {concern}
-                        </span>
-                      </label>
-                      <button 
-                        className="delete-concern-btn"
-                        onClick={() => handleDeleteConcern(report._id, index)}
-                        title="Delete concern"
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-          {savedReports.every(report => !report.analysis?.urgentConcerns?.length) && (
-            <p className="no-concerns">No urgent concerns found in your reports.</p>
-          )}
-        </div>
-      </div>
-
-      {/* Health Tips Section */}
-      <div className="health-tips">
-        <h2>Health Tips</h2>
-        <ul>
-          {healthTips.map((tip, index) => (
-            <li key={index}>{tip}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Recent Activities Section */}
-      <div className="recent-activities">
-        <h2>Recent Activities</h2>
-        <ul>
-          {recentActivities.map((activity, index) => (
-            <li key={index}>
-              <span>{activity.date}</span> - {activity.activity}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Health Goals Section */}
-      <div className="health-goals">
-        <h2>Health Goals</h2>
-        {healthGoals.map((goal, index) => (
-          <div className="goal-progress" key={index}>
-            <h4>{goal.goal}</h4>
-            <div className="progress-bar">
-              <div
-                className="progress"
-                style={{
-                  width: `${(goal.progress / goal.target) * 100}%`,
-                }}
-              ></div>
-            </div>
-            <p>
-              {goal.progress} / {goal.target}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Appointments Section */}
-      <div className="appointments">
-        <h2>Upcoming Appointments</h2>
-        <ul>
-          <li>Dr. Smith - Cardiologist - Nov 10, 2024 - 10:00 AM</li>
-          <li>Dr. Lee - Dentist - Dec 1, 2024 - 2:00 PM</li>
-        </ul>
-      </div>
-
-      {/* Add New Metric Button */}
-      <button className="add-metric-btn">Add New Metric</button>
+      <header className="my-health-header">
+        <h1 className="my-health-title">My Health Dashboard</h1>
+        <p className="my-health-subtitle">
+          Welcome back, {user?.name}! Track and manage your vital health
+          metrics.
+        </p>
+        <nav className="health-nav">
+          <button
+            className={`nav-btn ${activeTab === "overview" ? "active" : ""}`}
+            onClick={() => setActiveTab("overview")}
+          >
+            Overview
+          </button>
+          <button
+            className={`nav-btn ${activeTab === "metrics" ? "active" : ""}`}
+            onClick={() => setActiveTab("metrics")}
+          >
+            Health Metrics
+          </button>
+          <button
+            className={`nav-btn ${activeTab === "medications" ? "active" : ""}`}
+            onClick={() => setActiveTab("medications")}
+          >
+            Medications
+          </button>
+          <button
+            className={`nav-btn ${
+              activeTab === "appointments" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("appointments")}
+          >
+            Appointments
+          </button>
+          <button
+            className={`nav-btn ${activeTab === "reports" ? "active" : ""}`}
+            onClick={() => setActiveTab("reports")}
+          >
+            Reports
+          </button>
+        </nav>
+      </header>
 
       {error && <div className="error-message">{error}</div>}
-      
-      <div className="saved-reports-section">
-        <h2>Saved Reports</h2>
-        <div className="reports-grid">
-          {savedReports.map(report => (
-            <div key={report._id} className="report-card">
-              <h3>{report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'Unnamed Report'}</h3>
-              <div className="report-actions">
-                <button onClick={() => handleReportClick(report)}>
-                  View Details
-                </button>
-                <button 
-                  className="delete-button"
-                  onClick={() => handleDeleteReport(report._id)}
-                >
-                  Delete
-                </button>
-              </div>
+
+      <main className="health-content">
+        {activeTab === "overview" && (
+          <div className="overview-section">
+            {/* Quick Stats */}
+            <div className="quick-stats">
+              {healthMetrics.slice(0, 4).map((metric, index) => (
+                <div className="stat-card" key={index}>
+                  <div className="stat-icon">{metric.icon}</div>
+                  <div className="stat-details">
+                    <h3>{metric.title}</h3>
+                    <p className="stat-value">{metric.value}</p>
+                    <p className="stat-trend">
+                      {metric.trend > 0 ? "↑" : "↓"} {Math.abs(metric.trend)}%
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-          {savedReports.length === 0 && (
-            <p>No saved reports found.</p>
-          )}
-        </div>
-      </div>
+
+            {/* Health Trends Chart */}
+            <div className="health-trends">
+              <h2>Health Trends</h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={healthMetrics}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Next Appointments */}
+            <div className="upcoming-appointments">
+              <h2>Upcoming Appointments</h2>
+              <div className="appointment-cards">
+                {appointments.slice(0, 3).map((appointment, index) => (
+                  <div className="appointment-card" key={index}>
+                    <div className="appointment-date">
+                      {format(new Date(appointment.date), "MMM dd, yyyy")}
+                    </div>
+                    <div className="appointment-details">
+                      <h4>{appointment.doctorName}</h4>
+                      <p>{appointment.specialty}</p>
+                      <p>{format(new Date(appointment.date), "hh:mm a")}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="action-btn"
+                onClick={() => setShowBookAppointmentModal(true)}
+              >
+                Book New Appointment
+              </button>
+            </div>
+
+            {/* Medication Reminders */}
+            <div className="medication-reminders">
+              <h2>Today's Medications</h2>
+              <div className="medication-list">
+                {medications.map((medication, index) => (
+                  <div className="medication-item" key={index}>
+                    <div className="medication-info">
+                      <h4>{medication.name}</h4>
+                      <p>
+                        {medication.dosage} - {medication.frequency}
+                      </p>
+                    </div>
+                    <button
+                      className="track-btn"
+                      onClick={() =>
+                        handleTrackMedication(medication.id, { taken: true })
+                      }
+                    >
+                      Mark as Taken
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="action-btn"
+                onClick={() => setShowAddMedicationModal(true)}
+              >
+                Add New Medication
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "metrics" && (
+          <div className="metrics-section">
+            {/* Detailed metrics view */}
+            <div className="metrics-grid">
+              {healthMetrics.map((metric, index) => (
+                <div className="metric-card detailed" key={index}>
+                  <div className="metric-header">
+                    <div className="metric-icon">{metric.icon}</div>
+                    <h3>{metric.title}</h3>
+                  </div>
+                  <div className="metric-chart">
+                    <ResponsiveContainer width="100%" height={150}>
+                      <LineChart data={metric.history}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke="#8884d8"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="metric-stats">
+                    <div className="stat">
+                      <label>Current</label>
+                      <value>{metric.value}</value>
+                    </div>
+                    <div className="stat">
+                      <label>Average</label>
+                      <value>{metric.average}</value>
+                    </div>
+                    <div className="stat">
+                      <label>Target</label>
+                      <value>{metric.target}</value>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              className="action-btn"
+              onClick={() => setShowAddMetricModal(true)}
+            >
+              Add New Metric
+            </button>
+          </div>
+        )}
+
+        {activeTab === "medications" && (
+          <div className="medications-section">
+            <div className="medications-grid">
+              {medications.map((medication, index) => (
+                <div className="medication-card" key={index}>
+                  <h3>{medication.name}</h3>
+                  <div className="medication-details">
+                    <p>
+                      <strong>Dosage:</strong> {medication.dosage}
+                    </p>
+                    <p>
+                      <strong>Frequency:</strong> {medication.frequency}
+                    </p>
+                    <p>
+                      <strong>Start Date:</strong>{" "}
+                      {format(new Date(medication.startDate), "MMM dd, yyyy")}
+                    </p>
+                    <p>
+                      <strong>End Date:</strong>{" "}
+                      {medication.endDate
+                        ? format(new Date(medication.endDate), "MMM dd, yyyy")
+                        : "Ongoing"}
+                    </p>
+                  </div>
+                  <div className="medication-adherence">
+                    <h4>Adherence Rate</h4>
+                    <div className="progress-bar">
+                      <div
+                        className="progress"
+                        style={{ width: `${medication.adherenceRate}%` }}
+                      ></div>
+                    </div>
+                    <p>{medication.adherenceRate}%</p>
+                  </div>
+                  <div className="medication-actions">
+                    <button
+                      onClick={() =>
+                        handleTrackMedication(medication.id, { taken: true })
+                      }
+                    >
+                      Mark as Taken
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMedication(medication.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              className="action-btn"
+              onClick={() => setShowAddMedicationModal(true)}
+            >
+              Add New Medication
+            </button>
+          </div>
+        )}
+
+        {activeTab === "appointments" && (
+          <div className="appointments-section">
+            <div className="appointments-timeline">
+              {appointments.map((appointment, index) => (
+                <div className="appointment-item" key={index}>
+                  <div className="appointment-time">
+                    <div className="date">
+                      {format(new Date(appointment.date), "MMM dd")}
+                    </div>
+                    <div className="time">
+                      {format(new Date(appointment.date), "hh:mm a")}
+                    </div>
+                  </div>
+                  <div className="appointment-content">
+                    <h3>{appointment.doctorName}</h3>
+                    <p>{appointment.specialty}</p>
+                    <p>{appointment.location}</p>
+                    <div className="appointment-actions">
+                      <button
+                        onClick={() =>
+                          handleRescheduleAppointment(appointment.id)
+                        }
+                      >
+                        Reschedule
+                      </button>
+                      <button
+                        onClick={() => handleCancelAppointment(appointment.id)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              className="action-btn"
+              onClick={() => setShowBookAppointmentModal(true)}
+            >
+              Book New Appointment
+            </button>
+          </div>
+        )}
+
+        {activeTab === "reports" && (
+          <div className="reports-section">
+            <div className="reports-grid">
+              {savedReports.map((report) => (
+                <div className="report-card" key={report._id}>
+                  <h3>{format(new Date(report.createdAt), "MMM dd, yyyy")}</h3>
+                  <div className="report-preview">
+                    <p>
+                      {report.analysis?.simplifiedExplanation?.substring(
+                        0,
+                        100
+                      )}
+                      ...
+                    </p>
+                  </div>
+                  <div className="report-actions">
+                    <button onClick={() => setSelectedReport(report)}>
+                      View Details
+                    </button>
+                    <button onClick={() => handleDeleteReport(report._id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Modals */}
+      {showAddMetricModal && (
+        <AddMetricModal
+          onClose={() => setShowAddMetricModal(false)}
+          onSubmit={handleAddMetric}
+        />
+      )}
+
+      {showAddMedicationModal && (
+        <AddMedicationModal
+          onClose={() => setShowAddMedicationModal(false)}
+          onSubmit={handleAddMedication}
+        />
+      )}
+
+      {showBookAppointmentModal && (
+        <BookAppointmentModal
+          onClose={() => setShowBookAppointmentModal(false)}
+          onSubmit={handleBookAppointment}
+        />
+      )}
 
       {selectedReport && (
-        <div className="report-details">
-          <h2>Report Details</h2>
-          <div className="report-content">
-            <h3>Analysis</h3>
-            {selectedReport.analysis && (
-              <>
-                <div className="section">
-                  <h4>Key Findings</h4>
-                  <ul>
-                    {selectedReport.analysis.keyFindings?.map((finding, index) => (
-                      <li key={index}>{finding}</li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div className="section">
-                  <h4>Recommendations</h4>
-                  <ul>
-                    {selectedReport.analysis.recommendations?.map((rec, index) => (
-                      <li key={index}>{rec}</li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div className="section">
-                  <h4>Urgent Concerns</h4>
-                  <ul>
-                    {selectedReport.analysis.urgentConcerns?.map((concern, index) => (
-                      <li key={index}>{concern}</li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div className="section">
-                  <h4>Simplified Explanation</h4>
-                  <p>{selectedReport.analysis.simplifiedExplanation}</p>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <ReportDetailsModal
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+        />
       )}
     </div>
   );

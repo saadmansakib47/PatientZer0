@@ -1,0 +1,9 @@
+ai recommendation part
+- in the current health status user will update his current health status regularly
+- when user update his current health status, the ai will analyze the status update and provide insights that will be shown in health condition, user can remove any health condition that is not relevant anymore
+- user can add new health condition that is not shown in health condition
+- in health goals user can set his goals
+- when a user update any of these text box (current health status, health condition, health goals,health condition), the ai will analyze the text and find the catagory from data.js 
+- in the homepage in "ai recommendations" section, those post will only shown that contains the tag that is found by the ai(just show the posts from the explore section by filtering those catagories)
+- if a user remove any health condition that is not relevant anymore, the ai will analyze the text and find the catagory from data.js 
+- dont hardcode any tag in the ai recommendations part
