@@ -1,54 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axiosInstance from '../utils/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../utils/axiosInstance';
 import './BlogSubmissionForm.css';
 
-const BlogSubmissionForm = () => {
-  const { id } = useParams();
+const BlogSubmissionForm = ({ blogId = null }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     excerpt: '',
     tags: '',
-    thumbnail: null
   });
-  const [previewImage, setPreviewImage] = useState(null);
+  const [thumbnail, setThumbnail] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      fetchBlog();
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
     }
-  }, [id]);
 
-  const fetchBlog = async () => {
+    if (blogId) {
+      fetchBlogData();
+    }
+  }, [blogId, isAuthenticated, navigate]);
+
+  const fetchBlogData = async () => {
     try {
-      setLoading(true);
-      const response = await axiosInstance.get(`/blogs/${id}`);
+      const response = await axiosInstance.get(`/blogs/${blogId}`);
       const blog = response.data;
       setFormData({
         title: blog.title,
         content: blog.content,
-        excerpt: blog.excerpt,
-        tags: blog.tags.join(', '),
-        thumbnail: null
+        excerpt: blog.excerpt || '',
+        tags: blog.tags?.join(', ') || '',
       });
-      setPreviewImage(blog.thumbnail ? `http://localhost:5001/${blog.thumbnail}` : null);
-      setIsEditing(true);
+      if (blog.thumbnail) {
+        setPreviewUrl(blog.thumbnail);
+      }
     } catch (err) {
-      setError('Failed to fetch blog post. Please try again later.');
-      console.error('Error fetching blog:', err);
-    } finally {
-      setLoading(false);
+      setError('Failed to fetch blog data');
     }
   };
 
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -56,72 +55,65 @@ const BlogSubmissionForm = () => {
     }));
   };
 
-  const handleImageChange = (e) => {
+  const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({
-        ...prev,
-        thumbnail: file
-      }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setThumbnail(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== null) {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-
-      if (isEditing) {
-        await axiosInstance.put(`/blogs/${id}`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-      } else {
-        await axiosInstance.post('/blogs', formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
       }
 
-      navigate('/blog');
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('content', formData.content);
+      formDataToSend.append('excerpt', formData.excerpt);
+      formDataToSend.append('tags', formData.tags.split(',').map(tag => tag.trim()));
+      if (thumbnail) {
+        formDataToSend.append('thumbnail', thumbnail);
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      };
+
+      let response;
+      if (blogId) {
+        response = await axiosInstance.put(`/blogs/${blogId}`, formDataToSend, config);
+      } else {
+        response = await axiosInstance.post('/blogs', formDataToSend, config);
+      }
+
+      if (response.data) {
+        navigate('/blog');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error saving blog post');
       console.error('Error saving blog:', err);
+      setError(err.response?.data?.message || 'Failed to save blog post');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading && isEditing) {
-    return <div className="blog-form-loading">Loading blog post...</div>;
-  }
-
   return (
     <div className="blog-form-container">
-      <h2>{isEditing ? 'Edit Blog Post' : 'Create New Blog Post'}</h2>
+      <h2>{blogId ? 'Edit Blog Post' : 'Create New Blog Post'}</h2>
       {error && <div className="blog-form-error">{error}</div>}
       
-      <form onSubmit={handleSubmit} className="blog-form">
+      <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">Title</label>
           <input
@@ -129,9 +121,8 @@ const BlogSubmissionForm = () => {
             id="title"
             name="title"
             value={formData.title}
-            onChange={handleChange}
+            onChange={handleInputChange}
             required
-            placeholder="Enter blog title"
           />
         </div>
 
@@ -141,10 +132,8 @@ const BlogSubmissionForm = () => {
             id="excerpt"
             name="excerpt"
             value={formData.excerpt}
-            onChange={handleChange}
-            required
-            placeholder="Enter a brief excerpt of your blog post"
-            rows="3"
+            onChange={handleInputChange}
+            rows="2"
           />
         </div>
 
@@ -154,55 +143,48 @@ const BlogSubmissionForm = () => {
             id="content"
             name="content"
             value={formData.content}
-            onChange={handleChange}
+            onChange={handleInputChange}
+            rows="10"
             required
-            placeholder="Write your blog post content here..."
-            rows="15"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="tags">Tags</label>
+          <label htmlFor="tags">Tags (comma-separated)</label>
           <input
             type="text"
             id="tags"
             name="tags"
             value={formData.tags}
-            onChange={handleChange}
-            placeholder="Enter tags separated by commas"
+            onChange={handleInputChange}
+            placeholder="e.g., health, wellness, tips"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="thumbnail">Thumbnail Image</label>
+          <label htmlFor="thumbnail">
+            Thumbnail Image
+            <span className="optional-label">(optional)</span>
+          </label>
           <input
             type="file"
             id="thumbnail"
-            name="thumbnail"
             accept="image/*"
-            onChange={handleImageChange}
+            onChange={handleThumbnailChange}
           />
-          {previewImage && (
-            <div className="image-preview">
-              <img src={previewImage} alt="Preview" />
+          {previewUrl && (
+            <div className="thumbnail-preview">
+              <img src={previewUrl} alt="Thumbnail preview" />
             </div>
           )}
         </div>
 
         <div className="form-actions">
-          <button
-            type="button"
-            className="cancel-button"
-            onClick={() => navigate('/blog')}
-          >
+          <button type="button" onClick={() => navigate('/blog')} className="cancel-btn">
             Cancel
           </button>
-          <button
-            type="submit"
-            className="submit-button"
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : isEditing ? 'Update Post' : 'Publish Post'}
+          <button type="submit" disabled={loading} className="submit-btn">
+            {loading ? 'Saving...' : (blogId ? 'Update Post' : 'Create Post')}
           </button>
         </div>
       </form>
